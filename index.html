@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crypto Coach</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #050510; color: #e0e0f0; font-family: monospace; font-size: 13px; min-height: 100vh; }
+.header { background: #07071a; border-bottom: 1px solid #13133a; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+.header-title { color: #00ff9d; font-weight: 700; letter-spacing: 2px; font-size: 14px; }
+.header-sub { color: #2a2a4a; font-size: 9px; margin-top: 2px; }
+.header-val { text-align: right; }
+.tabs { display: flex; background: #07071a; border-bottom: 1px solid #13133a; position: sticky; top: 53px; z-index: 10; }
+.tab { background: transparent; border: none; border-bottom: 2px solid transparent; color: #3a3a6a; padding: 9px 14px; font-size: 10px; font-weight: 700; font-family: monospace; cursor: pointer; letter-spacing: 1px; }
+.tab.active { background: #0a1228; border-bottom: 2px solid #00ff9d; color: #00ff9d; }
+.timer-bar { margin-left: auto; padding: 8px 10px; display: flex; align-items: center; }
+.timer-track { width: 28px; height: 4px; background: #13133a; border-radius: 2px; overflow: hidden; }
+.timer-fill { height: 100%; background: #00ff9d33; transition: width 1s linear; }
+.body { padding: 12px; }
+.card { background: #08081c; border: 1px solid #13133a; border-radius: 6px; padding: 12px; margin-bottom: 8px; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.stat-box { background: #09091f; border-radius: 4px; padding: 8px 10px; }
+.stat-label { color: #2a2a4a; font-size: 9px; margin-bottom: 3px; }
+.stat-val { font-size: 13px; font-weight: 700; }
+.msg-card { border-radius: 6px; padding: 12px; margin-bottom: 12px; border-left-width: 4px; border-left-style: solid; }
+.msg-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.msg-emoji { font-size: 20px; }
+.msg-title { font-weight: 700; font-size: 13px; }
+.msg-body { color: #c0c0d8; font-size: 13px; line-height: 1.8; margin-bottom: 12px; }
+.holding-bar-wrap { background: #050510; border-radius: 5px; padding: 8px 12px; margin-bottom: 12px; border: 1px solid #13133a; }
+.holding-bar-top { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.holding-bar-track { background: #0d0d25; border-radius: 2px; height: 6px; overflow: hidden; }
+.holding-bar-fill { height: 100%; transition: width 1s ease; }
+.holding-bar-bot { display: flex; justify-content: space-between; margin-top: 4px; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { border-radius: 4px; padding: 7px 14px; font-size: 11px; font-weight: 700; font-family: monospace; cursor: pointer; border-width: 1px; border-style: solid; }
+.btn-green { background: #00ff9d20; border-color: #00ff9d55; color: #00ff9d; }
+.btn-red { background: #ff4d6d20; border-color: #ff4d6d55; color: #ff4d6d; }
+.btn-yellow { background: #ffd70020; border-color: #ffd70055; color: #ffd700; }
+.btn-sm { font-size: 10px; padding: 5px 10px; }
+.link-btn { display: inline-block; text-decoration: none; border-radius: 4px; padding: 7px 14px; font-size: 11px; font-weight: 700; font-family: monospace; background: #00ff9d20; border: 1px solid #00ff9d55; color: #00ff9d; }
+.data-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 8px; }
+.data-box { background: #09091f; border-radius: 3px; padding: 4px 8px; }
+.data-label { color: #2a2a4a; font-size: 9px; }
+.data-val { font-size: 11px; font-family: monospace; }
+.token-card { border-radius: 6px; padding: 12px; margin-bottom: 8px; border-left-width: 3px; border-left-style: solid; }
+.token-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.score-badge { border-radius: 3px; padding: 1px 6px; font-size: 9px; font-weight: 700; border-width: 1px; border-style: solid; }
+.situation-card { background: #060614; border-left: 3px solid #13133a; margin-bottom: 14px; }
+.how-card { border-left: 3px solid #ffd700; }
+.how-title { color: #ffd700; font-size: 10px; margin-bottom: 6px; }
+.how-body { color: #555; font-size: 11px; line-height: 1.8; }
+.empty { text-align: center; color: #2a2a4a; padding: 30px; }
+.live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
+.trade-row { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 5px; border-bottom: 1px solid #0d0d20; padding-bottom: 4px; }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: #050510; }
+::-webkit-scrollbar-thumb { background: #13133a; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">◈ CRYPTO COACH</div>
+    <div class="header-sub" id="headerSub">Caricamento...</div>
+  </div>
+  <div class="header-val">
+    <div id="totalVal" style="font-weight:700;font-size:13px;">$100.00</div>
+    <div id="pnlVal" style="font-size:9px;">+$0.00 (0.0%)</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('coach')">🎯 COACH</button>
+  <button class="tab" onclick="switchTab('market')">📊 MERCATO</button>
+  <button class="tab" onclick="switchTab('wallet')">💼 WALLET</button>
+  <div class="timer-bar"><div class="timer-track"><div class="timer-fill" id="timerFill" style="width:100%"></div></div></div>
+</div>
+
+<div id="tab-coach" class="body"></div>
+<div id="tab-market" class="body" style="display:none"></div>
+<div id="tab-wallet" class="body" style="display:none"></div>
+
+<script>
+const BUDGET = 100;
+const REFRESH = 30;
+
+const FALLBACK = [
+  { symbol:"SOL",  name:"Solana",       price:148.20, chg:3.2,  vol:4200, score:71, mcap:82000 },
+  { symbol:"JUP",  name:"Jupiter",      price:0.58,   chg:8.4,  vol:180,  score:78, mcap:1200  },
+  { symbol:"WIF",  name:"dogwifhat",    price:0.91,   chg:11.2, vol:320,  score:82, mcap:1900  },
+  { symbol:"BONK", name:"Bonk",         price:0.0000142,chg:6.8,vol:280,  score:74, mcap:1300  },
+  { symbol:"JTO",  name:"Jito",         price:1.84,   chg:4.1,  vol:95,   score:68, mcap:800   },
+  { symbol:"PYTH", name:"Pyth Network", price:0.22,   chg:5.3,  vol:75,   score:70, mcap:600   },
+  { symbol:"RAY",  name:"Raydium",      price:2.41,   chg:7.6,  vol:140,  score:75, mcap:980   },
+  { symbol:"ORCA", name:"Orca",         price:2.18,   chg:3.8,  vol:45,   score:65, mcap:290   },
+];
+
+let tokens = JSON.parse(JSON.stringify(FALLBACK));
+let isLive = false;
+let cash = BUDGET;
+let holdings = {};
+let trades = [];
+let timerSec = REFRESH;
+let currentTab = 'coach';
+
+function fmtP(p) {
+  if (!p) return "—";
+  if (p < 0.000001) return "$" + p.toExponential(2);
+  if (p < 0.0001)   return "$" + p.toFixed(8);
+  if (p < 0.01)     return "$" + p.toFixed(6);
+  if (p < 1)        return "$" + p.toFixed(4);
+  if (p >= 1000)    return "$" + p.toLocaleString("it-IT",{maximumFractionDigits:2});
+  return "$" + p.toFixed(2);
+}
+
+function calcScore(chg, vol, mcap) {
+  let s = 50;
+  if (chg > 15) s+=15; else if (chg > 8) s+=9; else if (chg > 3) s+=4;
+  else if (chg < -15) s-=15; else if (chg < -8) s-=9; else if (chg < -3) s-=4;
+  const r = vol/mcap;
+  if (r > 0.4) s+=15; else if (r > 0.2) s+=9; else if (r > 0.08) s+=4; else if (r < 0.02) s-=8;
+  if (mcap < 500) s+=8; else if (mcap < 2000) s+=4; else if (mcap > 20000) s-=4;
+  return Math.max(5, Math.min(95, Math.round(s)));
+}
+
+function scoreColor(s) { return s >= 70 ? "#00ff9d" : s >= 45 ? "#ffd700" : "#ff4d6d"; }
+
+function holdVal() { return tokens.reduce((s,t) => s + (holdings[t.symbol] ? holdings[t.symbol].qty * t.price : 0), 0); }
+function totalVal() { return cash + holdVal(); }
+function pnl() { return totalVal() - BUDGET; }
+
+function updateHeader() {
+  const p = pnl(), tv = totalVal(), c = p >= 0 ? "#00ff9d" : "#ff4d6d";
+  document.getElementById("totalVal").style.color = c;
+  document.getElementById("totalVal").textContent = "$" + tv.toFixed(2);
+  document.getElementById("pnlVal").style.color = c;
+  document.getElementById("pnlVal").textContent = (p>=0?"+":"") + "$" + p.toFixed(2) + " (" + ((p/BUDGET)*100).toFixed(1) + "%)";
+  document.getElementById("headerSub").textContent = (isLive ? "● LIVE Binance" : "● Dati riferimento") + " · aggiorna in " + timerSec + "s";
+  document.getElementById("headerSub").style.color = isLive ? "#00ff9d" : "#ffd700";
+}
+
+async function fetchPrices() {
+  try {
+    const syms = FALLBACK.map(t => '"'+t.symbol+'USDT"').join(",");
+    const res = await fetch("https://api.binance.com/api/v3/ticker/24hr?symbols=["+syms+"]");
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    tokens = FALLBACK.map(tok => {
+      const d = data.find(x => x.symbol === tok.symbol+"USDT");
+      if (!d) return tok;
+      const price = parseFloat(d.lastPrice);
+      const chg = parseFloat(d.priceChangePercent);
+      const vol = parseFloat(d.quoteVolume)/1e6;
+      return Object.assign({}, tok, { price, chg:parseFloat(chg.toFixed(2)), vol:parseFloat(vol.toFixed(1)), score:calcScore(chg,vol,tok.mcap) });
+    });
+    isLive = true;
+  } catch(e) { isLive = false; }
+  render();
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  ["coach","market","wallet"].forEach(t => {
+    document.getElementById("tab-"+t).style.display = t===tab ? "block" : "none";
+    document.querySelectorAll(".tab")[["coach","market","wallet"].indexOf(t)].className = "tab" + (t===tab?" active":"");
+  });
+  render();
+}
+
+function buyToken(sym, usd) {
+  const tok = tokens.find(t=>t.symbol===sym);
+  if (!tok || cash < usd) return;
+  const qty = usd / tok.price;
+  if (holdings[sym]) {
+    const tot = holdings[sym].qty + qty;
+    holdings[sym] = { qty:tot, avg:(holdings[sym].qty*holdings[sym].avg+qty*tok.price)/tot, name:tok.name };
+  } else {
+    holdings[sym] = { qty, avg:tok.price, name:tok.name };
+  }
+  cash = parseFloat((cash-usd).toFixed(4));
+  trades.unshift({ type:"BUY", symbol:sym, price:tok.price, usd, time:new Date().toLocaleTimeString("it-IT") });
+  render();
+}
+
+function sellToken(sym, frac) {
+  const tok = tokens.find(t=>t.symbol===sym);
+  const h = holdings[sym];
+  if (!tok || !h) return;
+  const qty = h.qty * frac;
+  const proceeds = qty * tok.price;
+  const pnlT = parseFloat((proceeds - qty*h.avg).toFixed(4));
+  if (frac >= 1) delete holdings[sym];
+  else holdings[sym] = Object.assign({}, h, { qty: h.qty-qty });
+  cash = parseFloat((cash+proceeds).toFixed(4));
+  trades.unshift({ type:frac<1?"SELL½":"SELL", symbol:sym, price:tok.price, usd:proceeds, pnl:pnlT, time:new Date().toLocaleTimeString("it-IT") });
+  render();
+}
+
+function getMsgs() {
+  const msgs = [];
+  Object.keys(holdings).forEach(sym => {
+    const h = holdings[sym], tk = tokens.find(t=>t.symbol===sym);
+    if (!tk) return;
+    const pct = ((tk.price-h.avg)/h.avg)*100;
+    const val = h.qty*tk.price, inv = h.qty*h.avg, gain = (val-inv).toFixed(2);
+    if (pct >= 40) msgs.push({ id:sym+"_moon", pri:1, col:"#ff4d6d", sym, emoji:"🚀", title:sym+" +"+pct.toFixed(0)+"% — VENDI ORA", body:"Hai trasformato $"+inv.toFixed(0)+" in $"+val.toFixed(0)+". Guadagno reale di $"+gain+". Questi movimenti si invertono in pochi minuti.", act:"sell_all", cta:"VENDI TUTTO" });
+    else if (pct >= 20) msgs.push({ id:sym+"_take", pri:2, col:"#00ff9d", sym, emoji:"✅", title:sym+" +"+pct.toFixed(0)+"% — Incassa", body:"Entrato a "+fmtP(h.avg)+", ora "+fmtP(tk.price)+". Guadagno $"+gain+" su $"+inv.toFixed(0)+" investiti. Vendi almeno la metà.", act:"sell_half", cta:"VENDI METÀ", cta2:"VENDI TUTTO" });
+    else if (pct >= 10) msgs.push({ id:sym+"_hold", pri:3, col:"#ffd700", sym, emoji:"👀", title:sym+" +"+pct.toFixed(0)+"% — Tieni ancora", body:"Stai guadagnando $"+gain+". Target ideale +20/30%. Aspetta, ma se scende sotto l'entrata esci subito." });
+    else if (pct > 0) msgs.push({ id:sym+"_wait", pri:5, col:"#444", sym, emoji:"⏳", title:sym+" +"+pct.toFixed(1)+"% — Troppo poco", body:"Aspetta almeno +10% prima di considerare l'uscita." });
+    else if (pct <= -20) msgs.push({ id:sym+"_stop", pri:1, col:"#ff4d6d", sym, emoji:"🛑", title:sym+" -"+Math.abs(pct).toFixed(0)+"% — Taglia la perdita", body:"Stai perdendo $"+Math.abs(gain)+". Con $100 speculativi non conviene aspettare. Esci e preserva il capitale.", act:"sell_all", cta:"ESCI ORA" });
+    else if (pct <= -10) msgs.push({ id:sym+"_warn", pri:2, col:"#ff4d6d", sym, emoji:"⚠️", title:sym+" -"+Math.abs(pct).toFixed(0)+"% — Attenzione", body:"Stai perdendo $"+Math.abs(gain)+". Se continua oltre -20% esci senza pensarci.", act:"sell_all", cta:"VENDI E TAGLIA" });
+    else msgs.push({ id:sym+"_neg", pri:4, col:"#ffd700", sym, emoji:"👁", title:sym+" -"+Math.abs(pct).toFixed(1)+"% — Oscillazione", body:"Perdita lieve. Se scende oltre -10% rivaluta l'uscita." });
+  });
+  if (cash >= 20 && Object.keys(holdings).length < 4) {
+    const best = tokens.filter(t=>t.score>=70&&!holdings[t.symbol]).sort((a,b)=>b.score-a.score)[0];
+    if (best) msgs.push({ id:"buy_"+best.symbol, pri:2, col:"#00ff9d", sym:best.symbol, emoji:"🔥", title:best.symbol+" — Segnale forte", body:(best.chg>=0?"+":"")+best.chg.toFixed(1)+"% in 24h, score "+best.score+"/100. Hai $"+cash.toFixed(0)+" liberi. Vai su Jupiter e compra.", act:"jupiter", cta:"🌐 APRI JUPITER → COMPRA "+best.symbol, jupSym:best.symbol });
+  }
+  if (!msgs.length) msgs.push({ id:"calm", pri:9, col:"#333", sym:null, emoji:"🌙", title:"Mercato tranquillo", body:"Nessun segnale forte. Il coach aggiorna ogni 30 secondi e ti avvisa appena vede un'opportunità o un rischio." });
+  return msgs.sort((a,b)=>a.pri-b.pri);
+}
+
+function renderCoach() {
+  const p = pnl(), hv = holdVal(), pColor = p>=0?"#00ff9d":"#ff4d6d";
+  let html = '<div class="card situation-card"><div style="color:#2a2a4a;font-size:9px;letter-spacing:2px;margin-bottom:10px">LA TUA SITUAZIONE</div><div class="stat-grid">';
+  html += '<div class="stat-box"><div class="stat-label">CASH</div><div class="stat-val" style="color:#e0e0f0">$'+cash.toFixed(2)+'</div></div>';
+  html += '<div class="stat-box"><div class="stat-label">IN TOKEN</div><div class="stat-val" style="color:#888">$'+hv.toFixed(2)+'</div></div>';
+  html += '<div class="stat-box"><div class="stat-label">GUADAGNO</div><div class="stat-val" style="color:'+pColor+'">'+(p>=0?"+":"")+'$'+p.toFixed(2)+'</div></div>';
+  html += '</div></div>';
+
+  const msgs = getMsgs();
+  msgs.forEach(msg => {
+    const tk = tokens.find(t=>t.symbol===msg.sym);
+    const h = holdings[msg.sym];
+    const pct = (tk&&h) ? ((tk.price-h.avg)/h.avg*100) : null;
+    const bg = msg.pri===1 ? "#0d0710" : msg.col==="#00ff9d" ? "#06100a" : "#08081c";
+
+    html += '<div class="msg-card" style="border-left-color:'+msg.col+';background:'+bg+'">';
+    html += '<div class="msg-title-row"><span class="msg-emoji">'+msg.emoji+'</span><span class="msg-title" style="color:'+msg.col+'">'+msg.title+'</span></div>';
+    html += '<div class="msg-body">'+msg.body+'</div>';
+
+    if (h && tk && pct !== null) {
+      const barW = Math.min(100,Math.max(2,50+pct));
+      const barC = pct>=0?"#00ff9d":"#ff4d6d";
+      html += '<div class="holding-bar-wrap"><div class="holding-bar-top"><span style="color:#555;font-size:10px">Entrato a '+fmtP(h.avg)+'</span><span style="color:'+barC+';font-weight:700;font-size:11px">ora '+fmtP(tk.price)+' ('+(pct>=0?"+":"")+pct.toFixed(1)+'%)</span></div>';
+      html += '<div class="holding-bar-track"><div class="holding-bar-fill" style="width:'+barW+'%;background:'+barC+'"></div></div>';
+      html += '<div class="holding-bar-bot"><span style="color:#2a2a4a;font-size:9px">$'+(h.qty*h.avg).toFixed(2)+' investiti</span><span style="color:'+barC+';font-size:9px">$'+(h.qty*tk.price).toFixed(2)+' ora</span></div></div>';
+    }
+
+    html += '<div class="btn-row">';
+    if (msg.act==="sell_all" && h && tk) html += '<button class="btn btn-red" onclick="sellToken(\''+msg.sym+'\',1)">'+msg.cta+'</button>';
+    if (msg.act==="sell_half" && h && tk) html += '<button class="btn btn-green" onclick="sellToken(\''+msg.sym+'\',0.5)">✂️ '+msg.cta+'</button><button class="btn btn-red" onclick="sellToken(\''+msg.sym+'\',1)">🔴 '+msg.cta2+'</button>';
+    if (msg.act==="jupiter") html += '<a class="link-btn" href="https://jup.ag/swap/SOL-'+msg.jupSym+'" target="_blank">'+msg.cta+'</a>';
+    html += '</div></div>';
+  });
+  document.getElementById("tab-coach").innerHTML = html;
+}
+
+function renderMarket() {
+  let html = "";
+  const sorted = [...tokens].sort((a,b)=>b.score-a.score);
+  sorted.forEach(t => {
+    const h = holdings[t.symbol];
+    const sc = scoreColor(t.score);
+    const chgC = t.chg>=0?"#00ff9d":"#ff4d6d";
+    html += '<div class="token-card" style="background:#08081c;border-left-color:'+sc+';opacity:'+(t.score<40?0.5:1)+'">';
+    html += '<div class="token-top"><div><span style="color:#e0e0f0;font-weight:700;font-size:13px">'+t.symbol+'</span><span style="color:#333;font-size:10px;margin-left:6px">'+t.name+'</span>'+(h?'<span style="color:#ffd700;font-size:9px;margin-left:6px">★</span>':'')+'</div>';
+    html += '<span class="score-badge" style="background:'+sc+'18;border-color:'+sc+'44;color:'+sc+'">'+t.score+'/100</span></div>';
+    html += '<div class="data-grid">';
+    html += '<div class="data-box"><div class="data-label">PREZZO</div><div class="data-val">'+fmtP(t.price)+'</div></div>';
+    html += '<div class="data-box"><div class="data-label">24H</div><div class="data-val" style="color:'+chgC+';font-weight:700">'+(t.chg>=0?"▲":"▼")+Math.abs(t.chg).toFixed(1)+'%</div></div>';
+    html += '<div class="data-box"><div class="data-label">VOLUME</div><div class="data-val">$'+t.vol+'M</div></div>';
+    html += '</div>';
+    if (!h && t.score>=65 && cash>=20) html += '<a class="link-btn btn-sm" href="https://jup.ag/swap/SOL-'+t.symbol+'" target="_blank">🌐 COMPRA SU JUPITER</a>';
+    if (h) html += '<button class="btn btn-red btn-sm" onclick="sellToken(\''+t.symbol+'\',1)">🔴 SEGNA VENDUTO</button>';
+    html += '</div>';
+  });
+  document.getElementById("tab-market").innerHTML = html;
+}
+
+function renderWallet() {
+  const p = pnl(), hv = holdVal(), tv = totalVal(), pC = p>=0?"#00ff9d":"#ff4d6d";
+  let html = '<div class="stat-grid" style="margin-bottom:12px">';
+  html += '<div class="stat-box"><div class="stat-label">CASH</div><div class="stat-val" style="color:#e0e0f0">$'+cash.toFixed(2)+'</div></div>';
+  html += '<div class="stat-box"><div class="stat-label">TOKEN</div><div class="stat-val" style="color:#888">$'+hv.toFixed(2)+'</div></div>';
+  html += '<div class="stat-box"><div class="stat-label">P&L</div><div class="stat-val" style="color:'+pC+'">'+(p>=0?"+":"")+'$'+p.toFixed(2)+'</div></div>';
+  html += '</div>';
+  html += '<div class="card how-card"><div class="how-title">⚡ COME FUNZIONA</div><div class="how-body">1. Coach vede segnale forte<br>2. Tocchi il link verde → apre Jupiter<br>3. Jupiter è già connesso al tuo wallet<br>4. Inserisci importo → Face ID → eseguito<br>5. Torna qui e segna il trade</div></div>';
+
+  const hKeys = Object.keys(holdings);
+  if (!hKeys.length) {
+    html += '<div class="card"><div class="empty"><div style="font-size:24px;margin-bottom:6px">💼</div>Nessun trade ancora — vai su COACH per iniziare</div></div>';
+  } else {
+    hKeys.forEach(sym => {
+      const h = holdings[sym], tk = tokens.find(t=>t.symbol===sym);
+      const cp = tk ? tk.price : h.avg;
+      const val = h.qty*cp, hpnl = val-h.qty*h.avg, hpct = ((hpnl/(h.qty*h.avg))*100).toFixed(1);
+      const pc = hpnl>=0?"#00ff9d":"#ff4d6d";
+      html += '<div class="card" style="border-left:3px solid '+pc+'">';
+      html += '<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:#e0e0f0;font-weight:700">'+sym+' <span style="color:#444;font-weight:400">'+h.name+'</span></span><span style="color:'+pc+';font-weight:700">'+(hpnl>=0?"+":"")+'$'+hpnl.toFixed(2)+' ('+hpct+'%)</span></div>';
+      html += '<div class="data-grid">';
+      html += '<div class="data-box"><div class="data-label">VALORE</div><div class="data-val">$'+val.toFixed(2)+'</div></div>';
+      html += '<div class="data-box"><div class="data-label">ENTRATA</div><div class="data-val">'+fmtP(h.avg)+'</div></div>';
+      html += '<div class="data-box"><div class="data-label">ORA</div><div class="data-val" style="color:'+pc+'">'+fmtP(cp)+'</div></div>';
+      html += '</div><div class="btn-row"><button class="btn btn-red btn-sm" onclick="sellToken(\''+sym+'\',1)">🔴 SEGNA VENDUTO</button><button class="btn btn-yellow btn-sm" onclick="sellToken(\''+sym+'\',0.5)">✂️ SEGNA METÀ</button></div></div>';
+    });
+  }
+
+  if (trades.length) {
+    html += '<div class="card"><div style="color:#2a2a4a;font-size:9px;letter-spacing:2px;margin-bottom:8px">STORICO</div>';
+    trades.slice(0,15).forEach(t => {
+      const tc = t.type==="BUY"?"#00ff9d":"#ff4d6d";
+      html += '<div class="trade-row"><span style="color:'+tc+'">'+(t.type==="BUY"?"▲":"▼")+' '+t.symbol+'</span><span style="color:#555">$'+t.usd.toFixed(2)+'</span>'+(t.pnl!=null?'<span style="color:'+(t.pnl>=0?"#00ff9d":"#ff4d6d")+'">'+(t.pnl>=0?"+":"")+'$'+t.pnl.toFixed(2)+'</span>':'<span></span>')+'<span style="color:#1a1a3a">'+t.time+'</span></div>';
+    });
+    html += '</div>';
+  }
+
+  document.getElementById("tab-wallet").innerHTML = html;
+}
+
+function render() {
+  updateHeader();
+  if (currentTab==="coach")  renderCoach();
+  if (currentTab==="market") renderMarket();
+  if (currentTab==="wallet") renderWallet();
+}
+
+// Timer
+setInterval(() => {
+  timerSec = Math.max(0, timerSec-1);
+  document.getElementById("timerFill").style.width = (timerSec/REFRESH*100)+"%";
+  document.getElementById("headerSub").textContent = (isLive?"● LIVE Binance":"● Dati riferimento") + " · aggiorna in "+timerSec+"s";
+}, 1000);
+
+setInterval(() => {
+  timerSec = REFRESH;
+  fetchPrices();
+}, REFRESH*1000);
+
+// Start
+fetchPrices();
+render();
+</script>
+
+</body>
+</html>
